@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -9,6 +7,8 @@ public class PlayerController : MonoBehaviour
     public float sprintSpeed = 8f;
     public float gravity = -9.81f;
     public float jumpHeight = 2f;
+    public float groundCheckDistance = 0.2f;
+    public LayerMask groundMask;
 
     [Header("Look Settings")]
     public float mouseSensitivity = 100f;
@@ -19,19 +19,21 @@ public class PlayerController : MonoBehaviour
     private CharacterController characterController;
     private Vector3 velocity;
     private float xRotation = 0f;
-    private Animator Animator;
-    [Header("Perscon Settings")]
-    public bool IsGrounded;
-    public bool IsSit;
+    private Animator animator;
+
+    [Header("Person Settings")]
+    public bool isGrounded;
+    public bool isSit;
+    public bool UIOpen;
 
     private void Start()
     {
-        Animator = GetComponent<Animator>();
+        animator = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        foreach (var renderer in this.gameObject.GetComponentsInChildren<Renderer>())
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
         }
@@ -39,67 +41,74 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        IsGrounded = characterController.isGrounded;
+        CheckGrounded();
+        Gravity();
+
+        if (UIOpen) return;
 
         InputHandler();
         HandleLook();
-        Gravity();
     }
+
+    private void CheckGrounded()
+    {
+        // Более точная проверка нахождения на земле
+        isGrounded = Physics.CheckSphere(transform.position, characterController.radius + groundCheckDistance, groundMask);
+
+        // Дополнительная проверка через CharacterController
+        if (!isGrounded)
+        {
+            isGrounded = characterController.isGrounded;
+        }
+    }
+
     private void InputHandler()
     {
         HandleMovement();
-        if (Input.GetButtonDown("Jump") && IsGrounded) {Jump();}
+        if (Input.GetButtonDown("Jump") && isGrounded)
+        {
+            Jump();
+        }
     }
 
     private void HandleMovement()
     {
-        // Получаем ввод с клавиатуры
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
-        // Вычисляем направление движения относительно ориентации персонажа
         Vector3 move = transform.right * x + transform.forward * z;
 
         float currentSpeed = 0;
-        if (Input.GetKey(KeyCode.LeftShift) && x != 0 || z != 0)
+        if (Input.GetKey(KeyCode.LeftShift) && (x != 0 || z != 0))
         {
             currentSpeed = sprintSpeed;
-            Animator.SetInteger("IsRun", 2);
+            animator.SetInteger("IsRun", 2);
         }
-        else if(x != 0 ||  z != 0)
+        else if (x != 0 || z != 0)
         {
             currentSpeed = moveSpeed;
-            Animator.SetInteger("IsRun", 1);
+            animator.SetInteger("IsRun", 1);
         }
         else
         {
-            Animator.SetInteger("IsRun", 0);
+            animator.SetInteger("IsRun", 0);
         }
-        // Двигаем персонажа
+
         characterController.Move(move * currentSpeed * Time.deltaTime);
     }
 
     private void HandleLook()
     {
-        // Получаем ввод мыши
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
-        // Вертикальный поворот (вверх/вниз)
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, maxLookDownAngle, maxLookUpAngle);
 
-        // Применяем поворот камеры по вертикали
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-
-        // Горизонтальный поворот (влево/вправо) - поворачиваем весь игровой объект
         transform.Rotate(Vector3.up * mouseX);
     }
 
-    private void Sit()
-    {
-
-    }
     private void Jump()
     {
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -107,12 +116,21 @@ public class PlayerController : MonoBehaviour
 
     private void Gravity()
     {
-        if (IsGrounded && velocity.y < 0)
+        if (isGrounded && velocity.y < 0)
         {
-            velocity.y = -2f; // Небольшая сила прижимает к земле
+            velocity.y = -2f;
         }
 
         velocity.y += gravity * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
+    }
+
+    // Визуализация сферы проверки земли в редакторе
+    private void OnDrawGizmosSelected()
+    {
+        if (characterController == null) return;
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, characterController.radius + groundCheckDistance);
     }
 }

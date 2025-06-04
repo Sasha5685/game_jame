@@ -87,10 +87,10 @@ public class InteractableItem : MonoBehaviour
         Inventory playerInventory = FindObjectOfType<Inventory>();
         if (playerInventory != null && itemData != null)
         {
-            if (playerInventory.AddItem(itemData))
-            {
-                Destroy(gameObject);
-            }
+            if(playerInventory.FoundFreeSlot() > -1) { }
+            else { return; }
+            playerInventory.AddItemToSlot(playerInventory.FoundFreeSlot(), itemData, 1);
+            Destroy(gameObject);
         }
     }
 

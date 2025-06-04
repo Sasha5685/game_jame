@@ -19,10 +19,10 @@ public class BarrelSlot : MonoBehaviour, IPointerDownHandler
             switch (slotType)
             {
                 case SlotType.Hay:
-                    barrelController.OnHaySlotClick();
+                    //barrelController.OnHaySlotClick();
                     break;
                 case SlotType.Beer:
-                    barrelController.OnBeerSlotClick(beerSlotIndex);
+                    //barrelController.OnBeerSlotClick(beerSlotIndex);
                     break;
             }
         }

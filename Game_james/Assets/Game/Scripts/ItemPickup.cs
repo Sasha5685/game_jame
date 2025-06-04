@@ -86,10 +86,10 @@ public class ItemPickup : MonoBehaviour
         Inventory playerInventory = FindObjectOfType<Inventory>();
         if (playerInventory != null && itemData != null)
         {
-            if (playerInventory.AddItem(itemData))
+/*            if (playerInventory.AddItem(itemData))
             {
                 Destroy(gameObject);
-            }
+            }*/
         }
     }
 

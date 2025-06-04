@@ -364,8 +364,11 @@
 "Assets/Game/Scripts/Inventory/HotbarUI.cs"
 "Assets/Game/Scripts/Inventory/Inventory.cs"
 "Assets/Game/Scripts/Inventory/Item.cs"
+"Assets/Game/Scripts/Inventory/PointCoursorSlot.cs"
+"Assets/Game/Scripts/Inventory/Slot.cs"
 "Assets/Game/Scripts/ItemPickup.cs"
 "Assets/Game/Scripts/PlayerController.cs"
+"Assets/Game/Scripts/SpecializedSlot.cs"
 "Assets/Polytope Studio/Lowpoly_Characters/Sources/Scripts/PT_Create_Prefab.cs"
 "Assets/QuickOutline/Scripts/Outline.cs"
 -langversion:9.0

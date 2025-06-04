@@ -1,138 +1,275 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Inventory : MonoBehaviour
 {
-    public Item[] hotbarItems = new Item[6];
-    public int[] itemCounts = new int[6];
-    public int selectedSlot = 0;
-    public bool isInContainerUI = false;
+    public int SelectedSlot;
+    public Slot[] Slots;
+    public PointCoursorSlot CursorSlot;
 
-    // Текущий предмет для переноса
-    public Item itemToTransfer;
-    private int transferCount;
-
-    public event Action OnInventoryChanged;
-    public event Action<Item, int> OnStartItemTransfer;
-    public event Action OnEndItemTransfer;
-
-    public void StartItemTransfer(Item item, int count)
+    public static Inventory Instance;
+    private void Awake ()
     {
-        itemToTransfer = item;
-        transferCount = count;
-        OnStartItemTransfer?.Invoke(item, count);
-    }
-
-    public void EndItemTransfer()
-    {
-        itemToTransfer = null;
-        transferCount = 0;
-        OnEndItemTransfer?.Invoke();
-    }
-
-    public bool TryTransferItem(Inventory targetInventory, bool removeAfterTransfer = true)
-    {
-        if (itemToTransfer == null) return false;
-
-        if (targetInventory.AddItem(itemToTransfer, transferCount))
+        Instance = this;
+        for (int i = 0; i < Slots.Length; i++)
         {
-            if (removeAfterTransfer)
-            {
-                RemoveItem(selectedSlot, transferCount);
-            }
-            EndItemTransfer();
-            return true;
+            Slots[i].DestroySlot();
         }
-        return false;
+        if (Slots.Length > 0)
+        {
+            UpdateSelection(SelectedSlot);
+        }
     }
 
     private void Update()
     {
-        if (!isInContainerUI)
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
         {
-            // Переключение слотов только вне интерфейса
-            for (int i = 0; i < 6; i++)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
-                {
-                    ChangeSelectedSlot(i);
-                }
-            }
-
-            // Использование предмета по Q
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                UseSelectedItem();
-            }
-        }
-    }
-    public bool AddItem(Item item, int count = 1)
-    {
-        // Проверяем есть ли такой предмет в хотбаре и можно ли добавить в стек
-        for (int i = 0; i < hotbarItems.Length; i++)
-        {
-            if (hotbarItems[i] == item && itemCounts[i] < item.maxStack)
-            {
-                itemCounts[i] += count;
-                OnInventoryChanged?.Invoke();
-                return true;
-            }
+            int direction = scroll > 0 ? -1 : 1;
+            int newSlot = (SelectedSlot + direction + Slots.Length) % Slots.Length;
+            ChangeSelectedSlot(newSlot);
         }
 
-        // Ищем пустой слот
-        for (int i = 0; i < hotbarItems.Length; i++)
+        if (Input.GetKeyDown(KeyCode.Escape) && CursorSlot.IsUseSlot())
         {
-            if (hotbarItems[i] == null)
-            {
-                hotbarItems[i] = item;
-                itemCounts[i] = count;
-                OnInventoryChanged?.Invoke();
-                return true;
-            }
-        }
-
-        return false; // Нет места
-    }
-
-    public void RemoveItem(int slotIndex, int count = 1)
-    {
-        if (hotbarItems[slotIndex] != null)
-        {
-            itemCounts[slotIndex] -= count;
-
-            if (itemCounts[slotIndex] <= 0)
-            {
-                hotbarItems[slotIndex] = null;
-            }
-
-            OnInventoryChanged?.Invoke();
-        }
-    }
-
-    public void UseSelectedItem()
-    {
-        if (hotbarItems[selectedSlot] != null && !isInContainerUI)
-        {
-            hotbarItems[selectedSlot].Use();
-            RemoveItem(selectedSlot, 1);
+            ReturnCursorItemToInventory();
         }
     }
 
     public void ChangeSelectedSlot(int newSlot)
     {
-        selectedSlot = Mathf.Clamp(newSlot, 0, hotbarItems.Length - 1);
-        OnInventoryChanged?.Invoke();
+        Slots[SelectedSlot].SelectedSlot(false);
+        SelectedSlot = newSlot;
+        Slots[SelectedSlot].SelectedSlot(true);
     }
 
-    public bool TransferItemToContainer(Inventory container, int slotIndex)
+    public void AddItemToSlot(int Slot, Item item, int Count)
     {
-        if (hotbarItems[slotIndex] == null) return false;
-
-        if (container.AddItem(hotbarItems[slotIndex], itemCounts[slotIndex]))
-        {
-            RemoveItem(slotIndex, itemCounts[slotIndex]);
-            return true;
-        }
-        return false;
+        Slots[Slot].AddItemToSlot(item, Count);
     }
+
+    private void UpdateSelection(int slotIndex)
+    {
+        for (int i = 0; i < Slots.Length; i++)
+        {
+            Slots[i].SelectedSlot(i == slotIndex);
+        }
+    }
+    public int FoundFreeSlot()
+    {
+        for(int i = 0;i < Slots.Length;i++)
+        {
+            if (Slots[i].IsUseSlot() == false) { return i; }
+        }
+        return -1;
+    }
+
+
+    public void HandleLeftClick(Slot clickedSlot)
+    {
+        // Для специализированных слотов ничего не делаем - вся логика в SpecializedSlot
+        if (clickedSlot.GetComponent<SpecializedSlot>() != null) return;
+
+        // Стандартная логика только для обычных слотов
+        if (CursorSlot.IsUseSlot())
+        {
+            if (!clickedSlot.IsUseSlot())
+            {
+                clickedSlot.AddItemToSlot(CursorSlot.ItemType, CursorSlot.Count);
+                CursorSlot.DestroySlot();
+            }
+            else if (clickedSlot.ItemType == CursorSlot.ItemType)
+            {
+                clickedSlot.Count += CursorSlot.Count;
+                clickedSlot.CountText.text = clickedSlot.Count.ToString();
+                CursorSlot.DestroySlot();
+            }
+        }
+        else if (clickedSlot.IsUseSlot())
+        {
+            CursorSlot.AddItemToSlot(clickedSlot.ItemType, clickedSlot.Count);
+            clickedSlot.DestroySlot();
+        }
+    }
+
+    public void HandleRightClick(Slot clickedSlot)
+    {
+        var specialized = clickedSlot.GetComponent<SpecializedSlot>();
+        if (specialized != null && !specialized.canTakeItems)
+        {
+            Debug.Log("Из этого слота нельзя забирать предметы");
+            return;
+        }
+
+        if (CursorSlot.IsUseSlot())
+        {
+            ReturnCursorItemToInventory();
+        }
+        else if (clickedSlot.IsUseSlot())
+        {
+            int halfCount = Mathf.CeilToInt(clickedSlot.Count / 2f);
+            int remainingCount = clickedSlot.Count - halfCount;
+
+            CursorSlot.AddItemToSlot(clickedSlot.ItemType, halfCount);
+
+            if (remainingCount <= 0)
+            {
+                clickedSlot.DestroySlot();
+            }
+            else
+            {
+                clickedSlot.Count = remainingCount;
+                clickedSlot.CountText.text = remainingCount.ToString();
+            }
+        }
+    }
+
+    private void ReturnCursorItemToInventory()
+    {
+        int freeSlot = FoundFreeSlot();
+        if (freeSlot != -1)
+        {
+            Slots[freeSlot].AddItemToSlot(CursorSlot.ItemType, CursorSlot.Count);
+            CursorSlot.DestroySlot();
+        }
+        else
+        {
+            Debug.Log("No free slots available!");
+        }
+    }
+
+    //public Item[] hotbarItems = new Item[6];
+    //public int[] itemCounts = new int[6];
+    //public int selectedSlot = 0;
+    //public bool isInContainerUI = false;
+
+    //// Текущий предмет для переноса
+    //public Item itemToTransfer;
+    //private int transferCount;
+
+    //public event Action OnInventoryChanged;
+    //public event Action<Item, int> OnStartItemTransfer;
+    //public event Action OnEndItemTransfer;
+
+    //public void StartItemTransfer(Item item, int count)
+    //{
+    //    itemToTransfer = item;
+    //    transferCount = count;
+    //    OnStartItemTransfer?.Invoke(item, count);
+    //}
+
+    //public void EndItemTransfer()
+    //{
+    //    itemToTransfer = null;
+    //    transferCount = 0;
+    //    OnEndItemTransfer?.Invoke();
+    //}
+
+    //public bool TryTransferItem(Inventory targetInventory, bool removeAfterTransfer = true)
+    //{
+    //    if (itemToTransfer == null) return false;
+
+    //    if (targetInventory.AddItem(itemToTransfer, transferCount))
+    //    {
+    //        if (removeAfterTransfer)
+    //        {
+    //            RemoveItem(selectedSlot, transferCount);
+    //        }
+    //        EndItemTransfer();
+    //        return true;
+    //    }
+    //    return false;
+    //}
+
+    //private void Update()
+    //{
+    //    if (isInContainerUI) return; // Не обрабатываем управление инвентарем, если открыт UI контейнера
+
+    //    // Переключение слотов только вне интерфейса
+    //    for (int i = 0; i < 6; i++)
+    //    {
+    //        if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+    //        {
+    //            ChangeSelectedSlot(i);
+    //        }
+    //    }
+
+    //    // Использование предмета по Q
+    //    if (Input.GetKeyDown(KeyCode.Q))
+    //    {
+    //        UseSelectedItem();
+    //    }
+    //}
+    //public bool AddItem(Item item, int count = 1)
+    //{
+    //    // Проверяем есть ли такой предмет в хотбаре и можно ли добавить в стек
+    //    for (int i = 0; i < hotbarItems.Length; i++)
+    //    {
+    //        if (hotbarItems[i] == item && itemCounts[i] < item.maxStack)
+    //        {
+    //            itemCounts[i] += count;
+    //            OnInventoryChanged?.Invoke();
+    //            return true;
+    //        }
+    //    }
+
+    //    // Ищем пустой слот
+    //    for (int i = 0; i < hotbarItems.Length; i++)
+    //    {
+    //        if (hotbarItems[i] == null)
+    //        {
+    //            hotbarItems[i] = item;
+    //            itemCounts[i] = count;
+    //            OnInventoryChanged?.Invoke();
+    //            return true;
+    //        }
+    //    }
+
+    //    return false; // Нет места
+    //}
+
+    //public void RemoveItem(int slotIndex, int count = 1)
+    //{
+    //    if (hotbarItems[slotIndex] != null)
+    //    {
+    //        itemCounts[slotIndex] -= count;
+
+    //        if (itemCounts[slotIndex] <= 0)
+    //        {
+    //            hotbarItems[slotIndex] = null;
+    //        }
+
+    //        OnInventoryChanged?.Invoke();
+    //    }
+    //}
+
+    //public void UseSelectedItem()
+    //{
+    //    if (hotbarItems[selectedSlot] != null && !isInContainerUI)
+    //    {
+    //        hotbarItems[selectedSlot].Use();
+    //        RemoveItem(selectedSlot, 1);
+    //    }
+    //}
+
+    //public void ChangeSelectedSlot(int newSlot)
+    //{
+    //    selectedSlot = Mathf.Clamp(newSlot, 0, hotbarItems.Length - 1);
+    //    OnInventoryChanged?.Invoke();
+    //}
+
+    //public bool TransferItemToContainer(Inventory container, int slotIndex)
+    //{
+    //    if (hotbarItems[slotIndex] == null) return false;
+
+    //    if (container.AddItem(hotbarItems[slotIndex], itemCounts[slotIndex]))
+    //    {
+    //        RemoveItem(slotIndex, itemCounts[slotIndex]);
+    //        return true;
+    //    }
+    //    return false;
+    //}
 }

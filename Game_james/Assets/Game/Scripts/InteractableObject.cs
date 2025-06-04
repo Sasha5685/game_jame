@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class InteractableObject : MonoBehaviour
 {
@@ -9,8 +8,11 @@ public class InteractableObject : MonoBehaviour
     public string interactKey = "E";
     public string interactMessage = "Press (E) to open";
 
+    [Header("Barrel Settings")]
+    public BarrelController barrelController; // Переименовано в lowercase (стиль C#)
+    public Inventory playerInventory;
+
     private Camera mainCamera;
-    private bool isLookingAt = false;
 
     private void Start()
     {
@@ -26,10 +28,11 @@ public class InteractableObject : MonoBehaviour
         if (mainCamera == null) return;
 
         float distance = Vector3.Distance(transform.position, mainCamera.transform.position);
-        isLookingAt = IsPlayerLookingAtObject();
+        bool isLookingAt = IsPlayerLookingAtObject();
 
         if (distance <= interactionDistance && isLookingAt)
         {
+            // Показать текст взаимодействия
             if (interactionText != null)
             {
                 interactionText.SetActive(true);
@@ -38,9 +41,16 @@ public class InteractableObject : MonoBehaviour
                 interactionText.transform.LookAt(mainCamera.transform);
                 interactionText.transform.Rotate(0, 180, 0);
             }
+
+            // Обработка нажатия E (передаем управление в BarrelController)
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                barrelController.OpenUIBarrel(0);
+            }
         }
         else
         {
+            // Скрыть текст, если игрок не смотрит на объект
             if (interactionText != null)
             {
                 interactionText.SetActive(false);
@@ -48,15 +58,11 @@ public class InteractableObject : MonoBehaviour
         }
     }
 
+
+
     private bool IsPlayerLookingAtObject()
     {
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, interactionDistance))
-        {
-            return hit.collider.gameObject == gameObject;
-        }
-        return false;
+        return Physics.Raycast(ray, out RaycastHit hit, interactionDistance) && hit.collider.gameObject == gameObject;
     }
 }

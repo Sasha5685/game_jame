@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class HotbarUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class HotbarUI : MonoBehaviour
 {
-    public Inventory inventory;
+/*    public Inventory inventory;
     public Image[] slotIcons;
     public Text[] slotCounts;
     public Image[] slotHighlights;
@@ -22,7 +22,13 @@ public class HotbarUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private void Update()
     {
-        if (inventory.isInContainerUI) return;
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0)
+        {
+            int direction = scroll > 0 ? -1 : 1;
+            int newSlot = (inventory.selectedSlot + direction + 6) % 6;
+            inventory.ChangeSelectedSlot(newSlot);
+        }
 
         // Переключение слотов цифрами
         for (int i = 0; i < 6; i++)
@@ -33,6 +39,7 @@ public class HotbarUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
             }
         }
 
+        if (inventory.isInContainerUI) return;
         // Использование предмета по Q
         if (Input.GetKeyDown(KeyCode.Q))
         {
@@ -122,5 +129,5 @@ public class HotbarUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         inventory.OnInventoryChanged -= UpdateUI;
         inventory.OnStartItemTransfer -= OnStartTransfer;
         inventory.OnEndItemTransfer -= OnEndTransfer;
-    }
+    }*/
 }
