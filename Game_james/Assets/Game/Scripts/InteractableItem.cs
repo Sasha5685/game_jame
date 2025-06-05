@@ -1,104 +1,78 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class InteractableItem : MonoBehaviour
+
+public class InteractableItem : MonoBehaviour, IInteractable
 {
-    [Header("Settings")]
-    public float interactionDistance = 3f;
-    public Item itemData;
+    [Header("Interaction Settings")]
+    public KeyCode interactionKey = KeyCode.E;
 
-    [Header("Visuals")]
-    public Color outlineColor = Color.white;
-    public float outlineWidth = 0.02f;
-    public float glowIntensity = 1.5f;
+    [Header("Outline Settings")]
+    public Color outlineColor = Color.yellow;      // Цвет контура
+    public float defaultOutlineWidth = 3f;        // Ширина контура без наведения
+    public float hoverOutlineWidth = 8f;          // Ширина контура при наведении
+    public float pulseSpeed = 2.5f;               // Скорость пульсации
+    [Range(0f, 1f)] public float pulseIntensity = 0.85f; // Насколько сильно пульсирует (0 = нет пульсации, 1 = сильная)
 
-    [Header("UI")]
-    public GameObject takeTextPrefab;
+    public Item ItemData;
+    public int ItemIntAdd;
 
-    private GameObject takeTextInstance;
-    private Camera mainCamera;
-    private bool isHighlighted = false;
-    private Material[] originalMaterials;
-    private Material outlineMaterial;
+    private bool isHighlighted;
+    private Outline outline;
+    private float currentPulseValue;
 
     private void Start()
     {
-        mainCamera = Camera.main;
-
-        // Создаем текст "Take" как дочерний объект
-        if (takeTextPrefab != null)
-        {
-            takeTextInstance = Instantiate(takeTextPrefab, transform);
-            takeTextInstance.transform.localPosition = Vector3.up * 1.5f;
-            takeTextInstance.SetActive(false);
-        }
+        InitializeOutline();
     }
+
+    private void InitializeOutline()
+    {
+        outline = gameObject.GetComponent<Outline>();
+    }
+
+
 
     private void Update()
     {
-        if (mainCamera == null) return;
-
-        float distance = Vector3.Distance(transform.position, mainCamera.transform.position);
-        bool isLooking = IsPlayerLookingAtObject();
-
-        if (distance <= interactionDistance && isLooking)
+        if (isHighlighted)
         {
 
-            // Поворачиваем текст к камере
-            if (takeTextInstance != null)
-            {
-                takeTextInstance.SetActive(true);
-                takeTextInstance.transform.LookAt(mainCamera.transform);
-                takeTextInstance.transform.rotation = Quaternion.LookRotation(mainCamera.transform.forward);
-            }
 
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                TakeItem();
-            }
+            // Плавная пульсация контура (используем синусоиду для плавности)
+            currentPulseValue = Mathf.Sin(Time.time * pulseSpeed) * pulseIntensity;
+            float pulseWidth = hoverOutlineWidth * (1f + currentPulseValue);
+            outline.OutlineWidth = pulseWidth;
+        }
+    }
+
+    public void SetHighlight(bool state)
+    {
+        isHighlighted = state;
+
+
+        if (state)
+        {
+            // При наведении включаем пульсацию (она работает в Update)
+            outline.OutlineWidth = hoverOutlineWidth;
         }
         else
         {
-
-
-            if (takeTextInstance != null)
-            {
-                takeTextInstance.SetActive(false);
-            }
+            // Без наведения — просто статичная обводка
+            outline.OutlineWidth = defaultOutlineWidth;
         }
     }
 
-    private bool IsPlayerLookingAtObject()
-    {
-        Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, interactionDistance))
-        {
-            return hit.collider.gameObject == gameObject;
-        }
-        return false;
-    }
-
-
-
-    private void TakeItem()
+    public void Interact()
     {
         Inventory playerInventory = FindObjectOfType<Inventory>();
-        if (playerInventory != null && itemData != null)
+        if (playerInventory != null && ItemData != null && playerInventory.FoundFreeSlot() > -1)
         {
-            if(playerInventory.FoundFreeSlot() > -1) { }
-            else { return; }
-            playerInventory.AddItemToSlot(playerInventory.FoundFreeSlot(), itemData, 1);
+            playerInventory.AddItemToSlot(playerInventory.FoundFreeSlot(), ItemData, ItemIntAdd);
+
             Destroy(gameObject);
         }
     }
 
-    private void OnDestroy()
-    {
-        if (takeTextInstance != null)
-        {
-            Destroy(takeTextInstance);
-        }
-    }
+
 }

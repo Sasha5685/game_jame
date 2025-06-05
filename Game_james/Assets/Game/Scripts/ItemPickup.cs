@@ -16,7 +16,6 @@ public class ItemPickup : MonoBehaviour
 
     private GameObject takeTextInstance;
     private Camera mainCamera;
-    private bool isHighlighted = false;
     private Material[] originalMaterials;
     private Material outlineMaterial;
 

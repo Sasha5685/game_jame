@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: haystack
   m_EditorClassIdentifier: 
   itemName: haystack
-  icon: {fileID: 21300000, guid: 0930a9809dacd40d98a066a73d478606, type: 3}
+  icon: {fileID: 1530835386, guid: 60107eae2637a4d4e9b41664e04d3ce5, type: 3}
   maxStack: 1
+  prefab: {fileID: 0}

@@ -16,7 +16,7 @@ public class Slot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     public GameObject SelectedSlotUI;
 
-    private Color normalColor = Color.white;
+    private Color normalColor = new Color(0.7f, 0.7f, 0.7f, 1f);
     private Color hoveredColor = new Color(0.8f, 0.8f, 0.8f, 1f);
     public void DestroySlot()
     {

@@ -1,68 +1,65 @@
 using TMPro;
 using UnityEngine;
 
-public class InteractableObject : MonoBehaviour
+public class InteractableObject : MonoBehaviour, IInteractable
 {
-    public float interactionDistance = 3f;
-    public GameObject interactionText;
-    public string interactKey = "E";
-    public string interactMessage = "Press (E) to open";
+    [Header("Interaction Settings")]
+    public string interactionText = "Press [E] to open";
+    public KeyCode interactionKey = KeyCode.E;
+    public Vector3 textOffset = new Vector3(0, 1.5f, 0);
 
-    [Header("Barrel Settings")]
-    public BarrelController barrelController; // Переименовано в lowercase (стиль C#)
-    public Inventory playerInventory;
+    [Header("Script References")]
+    public int interactionIndex = 0;
+    public int BarrelInt;
+    public BarrelController BarrelController;
 
-    private Camera mainCamera;
+    private GameObject interactionTextInstance;
+    private TextMeshPro textMesh;
+    private bool isHighlighted;
 
     private void Start()
     {
-        mainCamera = Camera.main;
-        if (interactionText != null)
-        {
-            interactionText.SetActive(false);
-        }
+        CreateInteractionText();
+    }
+
+    private void CreateInteractionText()
+    {
+        interactionTextInstance = new GameObject("InteractionText");
+        interactionTextInstance.transform.SetParent(transform);
+        interactionTextInstance.transform.localPosition = textOffset;
+
+        textMesh = interactionTextInstance.AddComponent<TextMeshPro>();
+        textMesh.text = interactionText.Replace("[E]", $"[{interactionKey}]");
+        textMesh.fontSize = 2;
+        textMesh.alignment = TextAlignmentOptions.Center;
+        textMesh.enabled = false;
     }
 
     private void Update()
     {
-        if (mainCamera == null) return;
-
-        float distance = Vector3.Distance(transform.position, mainCamera.transform.position);
-        bool isLookingAt = IsPlayerLookingAtObject();
-
-        if (distance <= interactionDistance && isLookingAt)
+        if (isHighlighted && interactionTextInstance != null)
         {
-            // Показать текст взаимодействия
-            if (interactionText != null)
-            {
-                interactionText.SetActive(true);
-                interactionText.GetComponent<TextMeshPro>().text = interactMessage;
-                interactionText.transform.position = transform.position + Vector3.up * 1.5f;
-                interactionText.transform.LookAt(mainCamera.transform);
-                interactionText.transform.Rotate(0, 180, 0);
-            }
-
-            // Обработка нажатия E (передаем управление в BarrelController)
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                barrelController.OpenUIBarrel(0);
-            }
-        }
-        else
-        {
-            // Скрыть текст, если игрок не смотрит на объект
-            if (interactionText != null)
-            {
-                interactionText.SetActive(false);
-            }
+            // Постоянное обновление позиции и поворота
+            interactionTextInstance.transform.position = transform.position + textOffset;
+            interactionTextInstance.transform.LookAt(Camera.main.transform);
+            interactionTextInstance.transform.Rotate(0, 180, 0);
         }
     }
 
-
-
-    private bool IsPlayerLookingAtObject()
+    public void SetHighlight(bool state)
     {
-        Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
-        return Physics.Raycast(ray, out RaycastHit hit, interactionDistance) && hit.collider.gameObject == gameObject;
+        isHighlighted = state;
+        if (textMesh != null)
+        {
+            textMesh.enabled = state;
+        }
+    }
+
+    public void Interact()
+    {
+        if (interactionIndex == 0 && BarrelController != null)
+        {
+            BarrelController.OpenUIBarrel(BarrelInt);
+        }
     }
 }
