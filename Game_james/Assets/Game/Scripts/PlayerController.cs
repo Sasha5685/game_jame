@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     public bool isSit;
     public bool UIOpen;
     public bool isPushing;
+    public Vector3 SitSt;
 
     [Header("Interaction Settings")]
     public float interactionDistance = 3f;
@@ -53,7 +54,7 @@ public class PlayerController : MonoBehaviour
 
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            //renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
         }
     }
 
@@ -61,8 +62,23 @@ public class PlayerController : MonoBehaviour
     {
         CheckGrounded();
         Gravity();
+        if (isSit)
+        {
+            HandleLook();
 
-        if (UIOpen) return;
+        }
+        else
+        {
+
+        }
+        if (Input.GetKeyDown(KeyCode.Escape) && isSit)
+        {
+            isSit = false;
+            animator.SetInteger("IsSit", 0);
+            characterController.height = 1.84f;
+            characterController.center = new Vector3(0, 0.86f, 0);
+        }
+        if (UIOpen || isSit) return;
 
         InputHandler();
         HandleLook();
@@ -204,16 +220,72 @@ public class PlayerController : MonoBehaviour
         canInteract = true;
     }
 
+    public void Sit(Transform SitTransform, Transform lookTarget = null)
+    {
+        isSit = true;
+        animator.SetInteger("IsSit", 1);
+
+        // Отключаем CharacterController для корректного позиционирования
+        characterController.enabled = false;
+
+        // Устанавливаем позицию
+        transform.position = SitTransform.position;
+
+        // Поворачиваем персонажа
+        if (lookTarget != null)
+        {
+            // Поворачиваем к цели (например, к столу перед скамейкой)
+            Vector3 lookDirection = lookTarget.position - transform.position;
+            lookDirection.y = 0; // Игнорируем разницу по высоте
+            transform.rotation = Quaternion.LookRotation(lookDirection);
+        }
+        else
+        {
+            // Или просто используем поворот точки сидения
+            transform.rotation = SitTransform.rotation;
+        }
+
+        // Настраиваем CharacterController
+        characterController.height = 0.2f;
+        characterController.center = new Vector3(0, 1.1f, 0);
+        characterController.enabled = true;
+    }
     private void HandleLook()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
         xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, maxLookDownAngle, maxLookUpAngle);
+
+        // Ограничиваем вертикальный поворот головы
+        if (isSit)
+        {
+            // Более строгие ограничения при сидении
+            xRotation = Mathf.Clamp(xRotation, -30f, 30f); // Ограничение по вертикали ±30 градусов
+
+            // Ограничиваем горизонтальный поворот
+            float currentYRotation = transform.eulerAngles.y;
+            float newYRotation = currentYRotation + mouseX;
+
+            // Ограничиваем поворот влево-вправо (например, ±45 градусов от начального положения)
+            if (Mathf.Abs(Mathf.DeltaAngle(newYRotation, transform.rotation.eulerAngles.y)) > 45f)
+            {
+                mouseX = 0; // Блокируем поворот если вышли за пределы
+            }
+        }
+        else
+        {
+            // Обычные ограничения при стоянии
+            xRotation = Mathf.Clamp(xRotation, maxLookDownAngle, maxLookUpAngle);
+        }
 
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
-        transform.Rotate(Vector3.up * mouseX);
+
+        // Поворачиваем тело только если не сидим
+        if (!isSit)
+        {
+            transform.Rotate(Vector3.up * mouseX);
+        }
     }
 
     private void Jump()

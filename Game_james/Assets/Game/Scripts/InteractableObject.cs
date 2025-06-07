@@ -1,3 +1,4 @@
+using System.Threading;
 using TMPro;
 using UnityEngine;
 
@@ -17,8 +18,11 @@ public class InteractableObject : MonoBehaviour, IInteractable
     private TextMeshPro textMesh;
     private bool isHighlighted;
 
+    private Barrel barrel;
+
     private void Start()
     {
+        barrel = GetComponent<Barrel>();
         CreateInteractionText();
     }
 
@@ -57,9 +61,9 @@ public class InteractableObject : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (interactionIndex == 0 && BarrelController != null)
+        if (interactionIndex == 0)
         {
-            BarrelController.OpenUIBarrel(BarrelInt);
+            BarrelManager.Instance.OpenBarrelUI(barrel.YouBarrelId);
         }
     }
 }

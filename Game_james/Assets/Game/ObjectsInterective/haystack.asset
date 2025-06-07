@@ -15,4 +15,5 @@ MonoBehaviour:
   itemName: haystack
   icon: {fileID: 1530835386, guid: 60107eae2637a4d4e9b41664e04d3ce5, type: 3}
   maxStack: 1
-  prefab: {fileID: 0}
+  prefab: {fileID: 7479062410387564928, guid: 6447841b4f21e0d42b247686d274f041, type: 3}
+  throwForce: 1

@@ -56,7 +56,7 @@ MonoBehaviour:
   - Assets/Game/Prefab/World/seno/vyzka.mat
   currentMaterialIndex: 0
   renderableMesh:
-    name: UM_OperatedMesh_69a76940-01bd-45fd-87df-dafa0e08994e
+    name: UM_OperatedMesh_3cde3f69-a96e-493f-a005-0d864858a9d8
     skinnedMesh: 0
     sharedMesh: {fileID: 5444189771393264481}
     buidVersion:
@@ -69,7 +69,7 @@ MonoBehaviour:
       OptimizedTopology: 0
       TransformVersion: 0
   sourceMesh: {fileID: 0}
-  sourceMeshRendererGUID: 69a76940-01bd-45fd-87df-dafa0e08994e
+  sourceMeshRendererGUID: 3cde3f69-a96e-493f-a005-0d864858a9d8
   guid: f88a3847-89b6-4282-aa5f-5f8955b2e4c8
   localOptions:
     RecalculateTangents: 0
@@ -192,7 +192,7 @@ MonoBehaviour:
   - Assets/Game/Prefab/World/seno/vyzka.mat
   currentMaterialIndex: 0
   renderableMesh:
-    name: UM_OperatedMesh_0ae4f8d4-abc7-4983-95e7-ba44ba27737a
+    name: UM_OperatedMesh_d95692df-4f00-434c-930d-b5daad449ad7
     skinnedMesh: 0
     sharedMesh: {fileID: -7443261525123350472}
     buidVersion:
@@ -205,7 +205,7 @@ MonoBehaviour:
       OptimizedTopology: 0
       TransformVersion: 0
   sourceMesh: {fileID: 0}
-  sourceMeshRendererGUID: 0ae4f8d4-abc7-4983-95e7-ba44ba27737a
+  sourceMeshRendererGUID: d95692df-4f00-434c-930d-b5daad449ad7
   guid: f88a3847-89b6-4282-aa5f-5f8955b2e4c8
   localOptions:
     RecalculateTangents: 0
@@ -329,7 +329,7 @@ MonoBehaviour:
   - Assets/Game/Prefab/World/seno/seno.mat
   currentMaterialIndex: 0
   renderableMesh:
-    name: UM_OperatedMesh_7f5ad311-8599-40df-bfc6-96ff15d7f2e4
+    name: UM_OperatedMesh_b5f580fc-3eff-4b4e-aee5-8316012bac8c
     skinnedMesh: 0
     sharedMesh: {fileID: 4301679320665258489}
     buidVersion:
@@ -342,7 +342,7 @@ MonoBehaviour:
       OptimizedTopology: 0
       TransformVersion: 0
   sourceMesh: {fileID: 0}
-  sourceMeshRendererGUID: 7f5ad311-8599-40df-bfc6-96ff15d7f2e4
+  sourceMeshRendererGUID: b5f580fc-3eff-4b4e-aee5-8316012bac8c
   guid: 769621d1-158e-465e-97cd-304e6d5da09f
   localOptions:
     RecalculateTangents: 0
@@ -424,7 +424,7 @@ GameObject:
   - component: {fileID: 5395945717188824514}
   - component: {fileID: 2221464018604690756}
   - component: {fileID: 3626625706379890658}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: stog_seno (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

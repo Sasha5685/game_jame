@@ -1,7 +1,4 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class Inventory : MonoBehaviour
 {
@@ -10,6 +7,11 @@ public class Inventory : MonoBehaviour
     public PointCoursorSlot CursorSlot;
 
     public static Inventory Instance;
+
+    [Header("Throwing Settings")]
+    public Transform throwPoint; // Сюда перетащите ваш ThrowPoint из сцены
+    public float baseThrowForce = 10f;
+    public float throwUpwardForce = 2f;
     private void Awake ()
     {
         Instance = this;
@@ -36,6 +38,11 @@ public class Inventory : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape) && CursorSlot.IsUseSlot())
         {
             ReturnCursorItemToInventory();
+        }
+
+        if (Input.GetKeyDown(KeyCode.F) && Slots[SelectedSlot].IsUseSlot())
+        {
+            ThrowItemFromSelectedSlot();
         }
     }
 
@@ -67,7 +74,54 @@ public class Inventory : MonoBehaviour
         return -1;
     }
 
+    public void ThrowItemFromSelectedSlot()
+    {
+        if (!Slots[SelectedSlot].IsUseSlot()) return;
 
+        Slot selectedSlot = Slots[SelectedSlot];
+
+        if (selectedSlot.ItemType.prefab == null)
+        {
+            Debug.LogWarning("This item doesn't have a physical representation!");
+            return;
+        }
+
+        // Создаем объект в точке броска
+        GameObject thrownItem = Instantiate(
+            selectedSlot.ItemType.prefab,
+            throwPoint.position,
+            throwPoint.rotation
+        );
+
+        // Добавляем физику
+        Rigidbody rb = thrownItem.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            Vector3 forceDirection = throwPoint.forward;
+
+            // Комбинируем силу: вперед + немного вверх
+            Vector3 forceToAdd = forceDirection * baseThrowForce +
+                                throwPoint.up * throwUpwardForce;
+
+            rb.AddForce(forceToAdd, ForceMode.Impulse);
+
+            // Добавляем случайное вращение для реалистичности
+            rb.AddTorque(new Vector3(
+                Random.Range(-5f, 5f),
+                Random.Range(-5f, 5f),
+                Random.Range(-5f, 5f)
+            ), ForceMode.Impulse);
+        }
+
+        // Уменьшаем количество предметов
+        selectedSlot.Count--;
+        selectedSlot.CountText.text = selectedSlot.Count.ToString();
+
+        if (selectedSlot.Count <= 0)
+        {
+            selectedSlot.DestroySlot();
+        }
+    }
     public void HandleLeftClick(Slot clickedSlot)
     {
         // Для специализированных слотов ничего не делаем - вся логика в SpecializedSlot

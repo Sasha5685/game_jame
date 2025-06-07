@@ -286,7 +286,7 @@ GameObject:
   - component: {fileID: -2018959369236679347}
   - component: {fileID: 6021689022108130243}
   - component: {fileID: 1562573362032805279}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: stog_seno
   m_TagString: Untagged
   m_Icon: {fileID: 0}
